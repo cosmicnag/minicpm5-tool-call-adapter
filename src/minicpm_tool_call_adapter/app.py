@@ -66,7 +66,7 @@ class UpstreamManager:
             str(port),
             "-m",
             self.config.model_path,
-            "--served-model-name",
+            "--alias",
             self.config.served_model_name,
             "--jinja",
             "--chat-template-file",

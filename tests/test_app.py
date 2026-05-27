@@ -8,6 +8,8 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from minicpm_tool_call_adapter.app import (
+    ProxyConfig,
+    UpstreamManager,
     _response_headers,
     _sse_stream_from_completion,
     rewrite_completion_response,
@@ -86,6 +88,26 @@ class AppRewriteTests(unittest.TestCase):
         self.assertEqual(rewritten["choices"][0]["finish_reason"], "stop")
 
 
+
+class UpstreamCommandTests(unittest.TestCase):
+    def test_build_command_uses_alias_flag(self) -> None:
+        manager = UpstreamManager(
+            ProxyConfig(
+                model_path="/tmp/model.gguf",
+                template_path="/tmp/template.jinja",
+                served_model_name="minicpm5-1b",
+                chat_template_kwargs='{"enable_thinking": true}',
+                extra_args=["--log-disable"],
+            )
+        )
+
+        cmd = manager._build_command(12345)
+
+        self.assertIn("--alias", cmd)
+        self.assertNotIn("--served-model-name", cmd)
+        self.assertEqual(cmd[cmd.index("--alias") + 1], "minicpm5-1b")
+        self.assertIn("--chat-template-kwargs", cmd)
+        self.assertIn("--log-disable", cmd)
 class ResponseHelpersTests(unittest.TestCase):
     def test_response_headers_drop_hop_by_hop_headers(self) -> None:
         headers = {
